@@ -307,7 +307,34 @@ class API(object):
                              items_path=('results',), **kwargs)
 
 
+    def iris_investigate_cli(self, domains=None, **kwargs):
+        """
+        Returns back investigation data related to the specified domains using our Iris Investigate service.
+        This is a CLI version of the iris_investigate method to help maintain backwards compatibility.
+        
+        For example:
+            investigate_domains = ['google.com', 'amazon.com']
+            assert api.iris_investigate_cli(*investigate_domains)['missing_domains'] == []
+        """
+        if not domains:
+            raise ValueError('One or more domains to investigate must be provided')
 
+        # Handle the domains, whether passed as a list, tuple, or individual domains
+        if isinstance(domains, (list, tuple)):
+            domains = ','.join(domains)
+        elif isinstance(domains, str):
+            domains = domains
+        
+        # Format the additional parameters that require special formatting (e.g., dates)
+        data_updated_after = kwargs.get('data_updated_after', None)
+        if hasattr(data_updated_after, 'strftime'):
+            data_updated_after = data_updated_after.strftime('%Y-%m-%d')
+        
+        # Call the _results method similarly to iris_enrich_cli, adjusting the endpoint as needed
+        result = self._results('iris-investigate', '/v1/iris-investigate/', domain=domains,
+                               data_updated_after=data_updated_after, **kwargs)
+                               
+        return result
     def iris_detect_monitors(self, include_counts=False, datetime_counts_since=None, sort=None, order="desc", offset=0,
                              limit=None, **kwargs):
         """Returns back a list of monitors in Iris Detect based on the provided filters.
